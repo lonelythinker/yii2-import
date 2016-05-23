@@ -75,7 +75,7 @@ class ImportController extends BaseController
     			continue;
     		}
     		$columns[] = $i;
-    		$fields[]= 1 == count($fkCells = explode('-', $cellVal))? \yii\helpers\Inflector::camel2id($cellVal, '_') : lcfirst($fkCells[0]) .'-'. \yii\helpers\Inflector::camel2id($fkCells[1], '_');
+    		$fields[]= 1 == count($fkCells = explode('-', $cellVal))? \yii\helpers\Inflector::camel2id($cellVal, '_') : lcfirst($fkCells[0]) . '-' . \yii\helpers\Inflector::camel2id($fkCells[1], '_');
     	}
     	
     	//从第二行开始取出数据并存入数组
