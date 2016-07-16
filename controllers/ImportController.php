@@ -159,8 +159,8 @@ class ImportController extends BaseController
 	    					}
 	    				}
 	    			}elseif(isset($fileColumns) && in_array($rowKey, $fileColumns)){//文件列
-	    				if(false !== strpos($importRowData[$rowKey], '|')){
-	    					$fileNames =  explode('|', $importRowData[$rowKey]);
+	    				if(false !== strpos($importRowData[$rowKey], ',')){
+	    					$fileNames =  explode(',', $importRowData[$rowKey]);
 	    				}else{
 	    					$fileNames = [$importRowData[$rowKey]];
 	    				}
@@ -179,7 +179,7 @@ class ImportController extends BaseController
 	    						}
 	    					}
 	    				}
-	    				$importRowData[$rowKey] = implode($fileNames, '|');
+	    				$importRowData[$rowKey] = implode($fileNames, ',');
 	    			}
 	    		}
 	    		if('insert' == $insertOrUpdate){
