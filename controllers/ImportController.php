@@ -88,7 +88,7 @@ class ImportController extends BaseController
 	    			$zh_key = preg_replace('/\s(?=\s)/', '', trim($column->comment));
 		    		$comments[$zh_key] = Inflector::camel2id($column->name, '_');
 		    		if(StringHelper::endsWith($zh_key, "标识") && ($zh_key_len = StringHelper::byteLength($zh_key)) > ($zh_id_len = StringHelper::byteLength("标识"))){
-		    			$comments[StringHelper::byteSubstr($zh_key, 0, $zh_key_len - $zh_id_len)] = explode('_', $comments[$zh_key])[0];
+		    			$comments[StringHelper::byteSubstr($zh_key, 0, $zh_key_len - $zh_id_len)] = substr_compare($comments[$zh_key], '_id', -3, 3, true) === 0 ? substr($comments[$zh_key], 0, -3) : $comments[$zh_key];
 		    		}
 	    		}
 	    	}
