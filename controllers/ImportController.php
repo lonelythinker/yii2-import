@@ -227,6 +227,8 @@ class ImportController extends BaseController
 									if(isset($row[$relations[$fkRelation[0].'_id']['column']])){
 										$importRowData[array_flip($importFileds)[$fkRelation[0].'_id']] = $row[$relations[$fkRelation[0].'_id']['column']];
 									}
+								}else{
+									$importRowData[array_flip($importFileds)[$fkRelation[0].'_id']] = null;
 								}
 							}
 							unset($importRowData[$rowKey]);
