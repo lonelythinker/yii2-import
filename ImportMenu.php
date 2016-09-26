@@ -68,6 +68,12 @@ class ImportMenu extends GridView
      * @var string the table to import
      */
     public $tableName = '';
+    
+    /**
+     * @var boolean has imgs to upload or not
+     */
+    public $uploadZipImgs = false;    
+    
     /**
      * @var BaseDataProvider the modified data provider for usage with import.
      */
@@ -182,12 +188,23 @@ class ImportMenu extends GridView
     			]);
     	$form = ActiveForm::begin(['action' => ['import/import'], 'layout' => 'horizontal', 'options' => ['enctype' => 'multipart/form-data']]);
     	echo Html::hiddenInput('tableName', $this->tableName);
-    	echo \kartik\widgets\FileInput::widget([
-		    'name' => 'importFile', 
-		    'options' => [
-		    	'multiple' => false,
-		    ], 
-		    'pluginOptions' => ['previewFileType' => 'any',]
+    	if($this->uploadZipImgs){
+    		echo Html::label(Yii::t('ltimport', 'Import Zip File for imgs')).'<br>';
+	    	echo \kartik\widgets\FileInput::widget([
+			    'name' => 'importImgFolderZip', 
+			    'options' => [
+			    	'multiple' => false,
+			    ], 
+			    'pluginOptions' => ['previewFileType' => 'any',]
+			]).'<br><br>';
+    	}
+    	echo Html::label(Yii::t('ltimport', 'Import data in selected format')).'<br>';
+		echo \kartik\widgets\FileInput::widget([
+				'name' => 'importFile',
+				'options' => [
+						'multiple' => false,
+				],
+				'pluginOptions' => ['previewFileType' => 'any',]
 		]).'<br><br>';
     	$form::end();
     	Modal::end();

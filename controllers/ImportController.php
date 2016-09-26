@@ -27,18 +27,30 @@ class ImportController extends BaseController
     	$request = Yii::$app->request;
     	if ($request->isPost && ($tableName = $request->post('tableName'))) {
 	    	$model = new ImportForm();
+	    	$model->importImgFolderZip = UploadedFile::getInstanceByName('importImgFolderZip');
     		$model->importFile = UploadedFile::getInstanceByName('importFile');
     		if ($model->upload()) {
     			// 文件上传成功
     			$basePath = dirname(Yii::$app->basePath).'/uploads/tmp/';
-		    	$importFiledsData = $this->generateData($tableName, $basePath.$model->importFile->name);
+    			if($model->importImgFolderZip){
+    				\common\helpers\ZipHelper::unZipDir($basePath . $model->importImgFolderZip->name, $basePath);
+    			}
+		    	$importFiledsData = $this->generateData($tableName, $basePath . $model->importFile->name);
 		    	try {
 		    		$importResult = $this->batchImportToDb($tableName, $importFiledsData['importFileds'], $importFiledsData['importData']);
-		    		Yii::$app->getSession()->setFlash('success', '成功导入数据 '.$importResult['affectedRowCount'].' 条');
+		    		Yii::$app->getSession()->setFlash('success', '成功导入数据 ' . $importResult['affectedRowCount'].' 条');
 		    	} catch (\yii\db\Exception $e) {
-		    		Yii::$app->getSession()->setFlash('error', '导入数据失败：'.json_encode($e->errorInfo));
+		    		Yii::$app->getSession()->setFlash('error', '导入数据失败：' .  json_encode($e->errorInfo));
 		    	}
 		    	$this->redirect(Yii::$app->request->getReferrer());
+    		}else{
+    			$errors = $model->getErrors();
+    			$errorStr = '';
+    			foreach ($errors as $key => $error){
+    				$errorStr .= "[$key] " . implode(' ', $error);
+    			}
+    			Yii::$app->getSession()->setFlash('error', '导入数据失败：' . $errorStr);
+    			$this->redirect(Yii::$app->request->getReferrer());
     		}
     	}
     }
@@ -65,10 +77,24 @@ class ImportController extends BaseController
      * @param string $filePath
      */
     private function generateCSVData($tableName, $filePath){
+    	if (file_exists($filePath) && is_readable($filePath)) {
+    		if(false !== ($fileHandle = fopen($filePath, 'r'))){
+    			while (($rowData = fgetcsv($fileHandle, 0, ',')) !== false){
+    				foreach ($rowData as $rowDatum){
+    					$encoding = \common\helpers\StringHelper::getCharset($rowDatum);
+    					if($encoding){
+    						break;
+    					}
+    				}
+    			}
+    			fclose($fileHandle);
+    		}
+    	}
+    	
     	$reader = \PHPExcel_IOFactory::createReader('CSV')
     	->setDelimiter(',')
     	->setEnclosure('')
-    	->setInputEncoding('GBK')
+    	->setInputEncoding($encoding)
     	->setSheetIndex(0);
     	$objCSV = $reader->load($filePath);
     	//选择标签页
@@ -120,7 +146,7 @@ class ImportController extends BaseController
     		if(mb_strlen($cellVal) === strlen($cellVal)){//英文
     			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? Inflector::camel2id($cellVal, '_') : Inflector::camel2id($fkCells[0], '_') . '-' . Inflector::camel2id($fkCells[1], '_');
     		}else{
-    			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? $comments[$cellVal] : $comments[$fkCells[0]] . '-' . $comments[$fkCells[1]];
+    			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? $comments[$cellVal] : $comments[$fkCells[0]] . '-'  . $comments[$fkCells[1]];
     		}
     	}
     	
@@ -130,7 +156,7 @@ class ImportController extends BaseController
     		$row = [];
     		$columnIsNull = true;//该列是否是空列
     		foreach ($columns as $j){
-    			$cellName = \PHPExcel_Cell::stringFromColumnIndex($j).$i;
+    			$cellName = \PHPExcel_Cell::stringFromColumnIndex($j) . $i;
     			$cellVal = trim($sheet->getCell($cellName)->getValue());
 	    		if($cellVal){
 	    			$columnIsNull = false;
@@ -256,12 +282,12 @@ class ImportController extends BaseController
 								$fileNames = [$importRowData[$rowKey]];
 							}
 							foreach ($fileNames as $fileKey => $fileName){
-								if(!file_exists($baseUploadPath.$fileName)){
-									if(file_exists($baseTmpPath.$fileName)){
+								if(!file_exists($baseUploadPath . $fileName)){
+									if(file_exists($baseTmpPath . $fileName)){
 										$newFileName = uniqid().strrchr($fileName, '.');
-										if(@copy($baseTmpPath.$fileName, $baseUploadPath.$newFileName)){
+										if(@copy($baseTmpPath . $fileName, $baseUploadPath . $newFileName)){
 											$fileNames[$fileKey] = $newFileName;
-	// 	    								unlink($baseTmpPath.$fileName);//删除旧文件
+	// 	    								unlink($baseTmpPath . $fileName);//删除旧文件
 										}else{
 											unset($fileNames[$fileKey]);
 										}
