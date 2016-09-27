@@ -24,7 +24,7 @@ return [
     'Excel 2007+' => '',
     'Excel 95 +' => '',
     'Import data' => '',
-    'Import Zip File for imgs' => '',
+    'Import Zip File' => '',
     'Import data in selected format' => '',
     'Imported File' => '',
     'Importing the file. Please wait...' => '',

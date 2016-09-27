@@ -72,7 +72,7 @@ class ImportMenu extends GridView
     /**
      * @var boolean has imgs to upload or not
      */
-    public $uploadZipImgs = false;    
+    public $uploadFolderZip = false;    
     
     /**
      * @var BaseDataProvider the modified data provider for usage with import.
@@ -188,10 +188,10 @@ class ImportMenu extends GridView
     			]);
     	$form = ActiveForm::begin(['action' => ['import/import'], 'layout' => 'horizontal', 'options' => ['enctype' => 'multipart/form-data']]);
     	echo Html::hiddenInput('tableName', $this->tableName);
-    	if($this->uploadZipImgs){
-    		echo Html::label(Yii::t('ltimport', 'Import Zip File for imgs')).'<br>';
+    	if($this->uploadFolderZip){
+    		echo Html::label(Yii::t('ltimport', 'Import Zip File')).'<br>';
 	    	echo \kartik\widgets\FileInput::widget([
-			    'name' => 'importImgFolderZip', 
+			    'name' => 'importFolderZip', 
 			    'options' => [
 			    	'multiple' => false,
 			    ], 

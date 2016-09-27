@@ -27,13 +27,13 @@ class ImportController extends BaseController
     	$request = Yii::$app->request;
     	if ($request->isPost && ($tableName = $request->post('tableName'))) {
 	    	$model = new ImportForm();
-	    	$model->importImgFolderZip = UploadedFile::getInstanceByName('importImgFolderZip');
+	    	$model->importFolderZip = UploadedFile::getInstanceByName('importFolderZip');
     		$model->importFile = UploadedFile::getInstanceByName('importFile');
     		if ($model->upload()) {
     			// 文件上传成功
     			$basePath = dirname(Yii::$app->basePath).'/uploads/tmp/';
-    			if($model->importImgFolderZip){
-    				\common\helpers\ZipHelper::unZipDir($basePath . $model->importImgFolderZip->name, $basePath);
+    			if($model->importFolderZip){
+    				\common\helpers\ZipHelper::unZipDir($basePath . $model->importFolderZip->name, $basePath);
     			}
 		    	$importFiledsData = $this->generateData($tableName, $basePath . $model->importFile->name);
 		    	try {

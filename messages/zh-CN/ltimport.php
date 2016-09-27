@@ -24,7 +24,7 @@ return [
     'Excel 2007+' => '',
     'Excel 95 +' => '',
     'Import data' => '导入数据',
-    'Import Zip File for imgs' => '上传图片文件夹压缩Zip',
+    'Import Zip File' => '上传文件夹压缩Zip',
     'Import data in selected format' => '以选定格式导入数据',
     'Imported File' => '',
     'Importing the file. Please wait...' => '正在导入文件，请稍后...',
