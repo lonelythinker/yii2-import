@@ -143,7 +143,7 @@ class ImportController extends BaseController
     			continue;
     		}
     		$columns[] = $i;
-    		if(mb_strlen($cellVal) === strlen($cellVal)){//英文
+    		if(preg_match("/^[a-zA-Z-\s]+$/",$cellVal)){//英文
     			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? Inflector::camel2id($cellVal, '_') : Inflector::camel2id($fkCells[0], '_') . '-' . Inflector::camel2id($fkCells[1], '_');
     		}else{
     			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? $comments[$cellVal] : $comments[$fkCells[0]] . '-'  . $comments[$fkCells[1]];
