@@ -36,11 +36,15 @@ class ImportController extends BaseController
     				\common\helpers\ZipHelper::unZipDir($basePath . $model->importFolderZip->name, $basePath);
     			}
 		    	$importFiledsData = $this->generateData($tableName, $basePath . $model->importFile->name);
-		    	try {
-		    		$importResult = $this->batchImportToDb($tableName, $importFiledsData['importFileds'], $importFiledsData['importData']);
-		    		Yii::$app->getSession()->setFlash('success', '成功导入数据 ' . $importResult['affectedRowCount'].' 条');
-		    	} catch (\yii\db\Exception $e) {
-		    		Yii::$app->getSession()->setFlash('error', '导入数据失败：' .  json_encode($e->errorInfo));
+		    	if(empty($importFiledsData['importFileds']) && empty($importFiledsData['importFileds'])){
+		    		Yii::$app->getSession()->setFlash('error', '导入数据失败：数据字符集不对');
+		    	}else{
+			    	try {
+			    		$importResult = $this->batchImportToDb($tableName, $importFiledsData['importFileds'], $importFiledsData['importData']);
+			    		Yii::$app->getSession()->setFlash('success', '成功导入数据 ' . $importResult['affectedRowCount'].' 条');
+			    	} catch (\yii\db\Exception $e) {
+			    		Yii::$app->getSession()->setFlash('error', '导入数据失败：' .  json_encode($e->errorInfo));
+			    	}
 		    	}
 		    	$this->redirect(Yii::$app->request->getReferrer());
     		}else{
