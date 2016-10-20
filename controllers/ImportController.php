@@ -35,17 +35,21 @@ class ImportController extends BaseController
     			if($model->importFolderZip){
     				\common\helpers\ZipHelper::unZipDir($basePath . $model->importFolderZip->name, $basePath);
     			}
-		    	$importFiledsData = $this->generateData($tableName, $basePath . $model->importFile->name);
-		    	if(empty($importFiledsData['importFileds']) && empty($importFiledsData['importFileds'])){
-		    		Yii::$app->getSession()->setFlash('error', '导入数据失败：数据字符集不对');
-		    	}else{
-			    	try {
-			    		$importResult = $this->batchImportToDb($tableName, $importFiledsData['importFileds'], $importFiledsData['importData']);
-			    		Yii::$app->getSession()->setFlash('success', '成功导入数据 ' . $importResult['affectedRowCount'].' 条');
-			    	} catch (\yii\db\Exception $e) {
-			    		Yii::$app->getSession()->setFlash('error', '导入数据失败：' .  json_encode($e->errorInfo));
+    			try{
+    				$importFiledsData = $this->generateData($tableName, $basePath . $model->importFile->name);
+			    	if(empty($importFiledsData['importFileds']) && empty($importFiledsData['importFileds'])){
+			    		Yii::$app->getSession()->setFlash('error', '导入数据失败：数据字符集不对');
+			    	}else{
+				    	try {
+				    		$importResult = $this->batchImportToDb($tableName, $importFiledsData['importFileds'], $importFiledsData['importData']);
+				    		Yii::$app->getSession()->setFlash('success', '成功导入数据 ' . $importResult['affectedRowCount'].' 条');
+				    	} catch (\yii\db\Exception $e) {
+				    		Yii::$app->getSession()->setFlash('error', '导入数据失败：' .  json_encode($e->errorInfo));
+				    	}
 			    	}
-		    	}
+    			} catch (Exception $e) {
+    				Yii::$app->getSession()->setFlash('error', '数据错误：' .  $e->getMessage());
+    			}
 		    	$this->redirect(Yii::$app->request->getReferrer());
     		}else{
     			$errors = $model->getErrors();
@@ -148,9 +152,16 @@ class ImportController extends BaseController
     		}
     		$columns[] = $i;
     		if(@preg_match("/^[a-zA-Z_-\s]+$/",$cellVal)){//英文
-    			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? Inflector::camel2id($cellVal, '_') : Inflector::camel2id($fkCells[0], '_') . '-' . Inflector::camel2id($fkCells[1], '_');
+    			$fields[]= 1 == count($fkCells = explode('-', $cellVal)) ? Inflector::camel2id($cellVal, '_') : Inflector::camel2id($fkCells[0], '_') . '-' . Inflector::camel2id($fkCells[1], '_');
     		}else{
-    			$fields[]= 1 == count($fkCells = explode('-', $cellVal))? $comments[$cellVal] : $comments[$fkCells[0]] . '-'  . $comments[$fkCells[1]];
+    			//$fields[]= 1 == count($fkCells = explode('-', $cellVal)) ? $comments[$cellVal] : $comments[$fkCells[0]] . '-'  . $comments[$fkCells[1]];
+    			if(1 == count($fkCells = explode('-', $cellVal)) && isset($comments[$cellVal])){
+    				$fields[] = $comments[$cellVal];
+    			}elseif(2 == count($fkCells) && isset($comments[$fkCells[0]]) && isset($comments[$fkCells[1]])){
+    				$fields[] = $comments[$fkCells[0]] . '-'  . $comments[$fkCells[1]];
+    			}else{
+    				Yii::$app->getSession()->setFlash('error', "表头['$cellVal']不匹配");
+    			}
     		}
     	}
     	
