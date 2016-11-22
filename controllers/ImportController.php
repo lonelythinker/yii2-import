@@ -1,13 +1,15 @@
 <?php
 
-namespace backend\controllers;
+namespace lonelythinker\yii2\import\controllers;
 
 use Yii;
 use backend\controllers\BaseController;
-use backend\models\forms\ImportForm;
+use lonelythinker\yii2\import\models\forms\ImportForm;
 use yii\web\UploadedFile;
 use yii\helpers\Inflector;
 use yii\helpers\StringHelper;
+use Qiniu\Storage\UploadManager;
+use Qiniu\Auth;
 
 /**
  * Import Controller
@@ -116,7 +118,7 @@ class ImportController extends BaseController
 	    $comments = [];
 	    foreach ($table->columns as $key => $column){
 	    	if(!empty($column->comment)){
-	    		if($column->type === 'smallint'){//字典
+	    		if($column->type === 'smallint' || StringHelper::endsWith($column->name, '_enum')){//字典
 	    			$comments[preg_replace('/\[.*\].*/', '', preg_replace('/\s(?=\s)/', '', trim($column->comment)))] = Inflector::camel2id($column->name, '_');
 	    		}else{
 	    			$zh_key = preg_replace('/\s(?=\s)/', '', trim($column->comment));
@@ -299,13 +301,33 @@ class ImportController extends BaseController
 							foreach ($fileNames as $fileKey => $fileName){
 								if(!file_exists($baseUploadPath . $fileName)){
 									if(file_exists($baseTmpPath . $fileName)){
-										$newFileName = uniqid().strrchr($fileName, '.');
-										if(@copy($baseTmpPath . $fileName, $baseUploadPath . $newFileName)){
-											$fileNames[$fileKey] = $newFileName;
-	// 	    								unlink($baseTmpPath . $fileName);//删除旧文件
-										}else{
-											unset($fileNames[$fileKey]);
-										}
+										//$newFileName = uniqid().strrchr($fileName, '.');
+										$newFileName = crc32(hash_file('md5', $baseTmpPath . $fileName)).strrchr($fileName, '.');
+						                if(isset($uploadConfig['type']) && trim($uploadConfig['type']) == 'local'){//上传到本地
+						                	if(@copy($baseTmpPath . $fileName, $baseUploadPath . $newFileName)){
+						                		$fileNames[$fileKey] = $newFileName;
+// 		    									unlink($baseTmpPath . $fileName);//删除旧文件
+						                	}else{
+												unset($fileNames[$fileKey]);
+											}
+						                }elseif(isset($uploadConfig['type']) && trim($uploadConfig['type']) == 'cloud' && isset($uploadConfig['qiniu']['enabled']) && $uploadConfig['qiniu']['enabled']){//传到七牛
+						                	$this->uploadToQiniu($newFileName, $baseTmpPath . $fileName);
+						                }elseif(isset($uploadConfig['type']) && trim($uploadConfig['type']) == 'localCloud' && isset($uploadConfig['qiniu']['enabled']) && $uploadConfig['qiniu']['enabled']){//上传到本地和七牛
+						                	$this->uploadToQiniu($newFileName, $baseTmpPath . $fileName);
+						                	if(@copy($baseTmpPath . $fileName, $baseUploadPath . $newFileName)){
+						                		$fileNames[$fileKey] = $newFileName;
+// 		    									unlink($baseTmpPath . $fileName);//删除旧文件
+						                	}else{
+												unset($fileNames[$fileKey]);
+											}
+						                }else{
+						                	if(@copy($baseTmpPath . $fileName, $baseUploadPath . $newFileName)){
+						                		$fileNames[$fileKey] = $newFileName;
+// 		    									unlink($baseTmpPath . $fileName);//删除旧文件
+						                	}else{
+												unset($fileNames[$fileKey]);
+											}
+						                }
 									}else{
 										unset($fileNames[$fileKey]);
 									}
@@ -353,5 +375,23 @@ class ImportController extends BaseController
     	}
     	 
     	return ['affectedRowCount' => $affectedRowCount];
+    }
+    
+    /**
+     * 上传到七牛
+     * @param String $key
+     * @param String $filePath
+     */
+    protected function uploadToQiniu($key, $filePath){
+    	$uploadConfig = Yii::$app->params['upload'];
+    	if(isset($uploadConfig['type']) && (trim($uploadConfig['type']) == 'cloud' || trim($uploadConfig['type']) == 'localCloud') && isset($uploadConfig['qiniu']['enabled']) && $uploadConfig['qiniu']['enabled']){//上传
+    		if(isset($uploadConfig['qiniu']['accessKey']) && isset($uploadConfig['qiniu']['secretKey']) && isset($uploadConfig['qiniu']['bucket'])){
+    			$auth = new Auth($uploadConfig['qiniu']['accessKey'], $uploadConfig['qiniu']['secretKey']);
+    			$token = $auth->uploadToken($uploadConfig['qiniu']['bucket']);
+    			$upManager = new UploadManager();
+    			list($ret, $error) = $upManager->put($token, $key, @file_get_contents($filePath));
+    		}
+    	}
+    	return;
     }
 }
