@@ -17,7 +17,7 @@
     "require": {
         "yiisoft/yii2": "*",
         "kartik-v/yii2-grid": "*",
-        "phpoffice/phpexcel": "*"
+        "phpoffice/phpspreadsheet": "*"
     },
     "config": {
         "process-timeout": 1800
