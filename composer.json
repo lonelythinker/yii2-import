@@ -16,8 +16,7 @@
     ],
     "require": {
         "yiisoft/yii2": "*",
-        "kartik-v/yii2-grid": "*",
-        "phpoffice/phpspreadsheet": "*"
+        "kartik-v/yii2-grid": "*"
     },
     "config": {
         "process-timeout": 1800
